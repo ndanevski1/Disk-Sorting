@@ -9,10 +9,10 @@ all: library.o msort
 library.o: library.cc library.h
 	$(CC) -o $@ -c $< $(CCFLAGS)
 
-jsoncpp.o: jsoncpp.cpp json/json.h
-	$(CC) -o $@ -c $< $(CCFLAGS) $(JSONCPP_OPTS)
+parse_schema.o: parse_schema.cc library.h
+	$(CC) -o $@ -c $< $(CCFLAGS)
 
-msort: msort.cc library.o 
+msort: msort.cc library.o parse_schema.o 
 	$(CC) -o $@ $^ $(CCFLAGS)
 
 bsort: bsort.cc 
