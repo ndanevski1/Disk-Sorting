@@ -18,6 +18,6 @@ int main(int argc, const char* argv[]) {
 	}
 
 	// Do work here
-	
+
 	return 0;
 }

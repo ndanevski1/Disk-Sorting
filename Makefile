@@ -1,22 +1,19 @@
 CC = g++
-CCFLAGS = -O3 -Wall -g -ljsoncpp
-LEVELDB_DIR = ./leveldb-1.15.0
-LEVELDB_OPTS = -I $(LEVELDB_DIR)/include -pthread $(LEVELDB_DIR)/libleveldb.a
-JSONCPP_OPTS = -I .
+CCFLAGS = -O3 -Wall -g -ljsoncpp -pthread
 
-all: library.o msort 
+all: library.o msort bsort
 
 library.o: library.cc library.h
 	$(CC) -o $@ -c $< $(CCFLAGS)
 
 jsoncpp.o: jsoncpp.cpp json/json.h
-	$(CC) -o $@ -c $< $(CCFLAGS) $(JSONCPP_OPTS)
+	$(CC) -o $@ -c $< $(CCFLAGS)
 
-msort: msort.cc library.o 
+msort: msort.cc library.o
 	$(CC) -o $@ $^ $(CCFLAGS)
 
-bsort: bsort.cc 
-	$(CC) -o $@ $^ $(CCFLAGS) $(LEVELDB_OPTS)
-	
+bsort: bsort.cc
+	$(CC) -o $@ $^ $(CCFLAGS)
+
 clean:
 	rm -rf *.o msort bsort msort.dSYM bsort.dSYM
