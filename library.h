@@ -1,13 +1,22 @@
 #include <cstdio>
+#include <string>
+#include <vector>
+using namespace std;
 
 /**
  * An attribute schema. You should probably modify
  * this to add your own fields.
  */
-typedef struct {
-  char *name;
+
+enum type{t_string, t_integer, t_float};
+
+struct Attribute {
+  string name;
   int length;
-} Attribute;
+  type t;
+  Attribute(string _name, int _length, type _t) : name(_name), length(_length), t(_t) {
+  }
+};
 
 /**
  * A record schema contains an array of attribute
@@ -15,15 +24,15 @@ typedef struct {
  * attributes (represented as the indices of the 
  * `attrs` array).
  */
-typedef struct {
-  Attribute** attrs;
-  int nattrs;
-  int* sort_attrs;
-  int n_sort_attrs;
-} Schema;
+struct Schema {
+  vector<Attribute> attrs;
+  vector<int> sort_attrs;
+  Schema(vector<Attribute> _attrs, vector<int> _sort_attrs) : attrs(_attrs), sort_attrs(_sort_attrs) {
+  }
+};
 
 /**
- * A record can defined as a struct with a pointer
+ * A record can be defined as a struct with a pointer
  * to the schema and some data. 
  */
 typedef struct {
