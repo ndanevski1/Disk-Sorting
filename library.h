@@ -29,22 +29,27 @@ struct Schema {
   vector<int> sort_attrs;
   Schema(vector<Attribute> _attrs, vector<int> _sort_attrs) : attrs(_attrs), sort_attrs(_sort_attrs) {
   }
+  int get_schema_length();
 };
 
 /**
  * A record can be defined as a struct with a pointer
  * to the schema and some data. 
  */
-typedef struct {
-  Schema* schema;
-  char* data;
-} Record;
+struct Record {
+  Schema *schema;
+  vector<string> data;
+  Record() {
+  }
+  Record(Schema *_schema, vector<string> _data) : schema(_schema), data(_data) {
+  }
+};
 
 /**
  * Creates sorted runs of length `run_length` in
  * the `out_fp`.
  */
-void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema *schema);
+void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema);
 
 /**
  * The iterator helps you scan through a run.

@@ -46,16 +46,16 @@ Schema parse_schema(string schema_file, vector<string> sort_attrs_name) {
     return schema;
 }
 
-int main() {
-    vector<string> sort_attrs_name = {"account_name", "student_number"};
+// int main() {
+//     vector<string> sort_attrs_name = {"account_name", "student_number"};
 
-    Schema schema = parse_schema("schema_example.json", sort_attrs_name);
-    cout << "Attributes: ";
-    for(auto attribute: schema.attrs)
-        cout << attribute.name << ", ";
-    cout << endl;
-    for(auto sort_attribute: schema.sort_attrs)
-        cout << sort_attribute << ", ";
-    cout << endl;
-    return 0;
-}
+//     Schema schema = parse_schema("schema_example.json", sort_attrs_name);
+//     cout << "Attributes: ";
+//     for(auto attribute: schema.attrs)
+//         cout << attribute.name << ", ";
+//     cout << endl;
+//     for(auto sort_attribute: schema.sort_attrs)
+//         cout << sort_attribute << ", ";
+//     cout << endl;
+//     return 0;
+// }
