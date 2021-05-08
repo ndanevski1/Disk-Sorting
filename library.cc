@@ -84,25 +84,23 @@ void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema)
   vector<Record> records(tuples_in_run, Record());
 
   int tuples_left = file_size / tuple_len;
-  char* tuple = new char[tuple_len];
+  char* tuple = new char[tuple_len + 1];
   while(tuples_left > 0) {
     for(int i = 0; i < min(tuples_left, tuples_in_run); i++) {
-      int getline_arg = tuple_len - 1;
+      int getline_arg = tuple_len + 1;
 
       getline(&tuple, (size_t*)(&getline_arg), in_fp);
-
-      records[i] = char2record(tuple, schema);
-
-       
+      // cout << getline_arg << ' ' << strlen(tuple) << endl;
+      records[i] = char2record(tuple, schema);       
     }
     sort(records.begin(), records.begin() + min(tuples_left, tuples_in_run), compareRecords);
     char* records_for_disk = print_records(records, tuple_len);
     fwrite(records_for_disk, 1, min(tuples_left, tuples_in_run) * tuple_len, out_fp);
-    delete records_for_disk;
+    delete[] records_for_disk;
     
     tuples_left -= tuples_in_run;
   }
-  delete tuple;
+  delete[] tuple;
 }
 
 void merge_runs(RunIterator* iterators[], int num_runs, FILE *out_fp,

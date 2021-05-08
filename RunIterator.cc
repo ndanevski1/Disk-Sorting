@@ -35,7 +35,7 @@ bool RunIterator::has_next() {
         buffer_index = 0;
         tuples_left -= read_tuples;
 
-        delete buf_tupples;
+        delete[] buf_tupples;
     }
     cur_record = cur_buffer[buffer_index];
     buffer_index++;
