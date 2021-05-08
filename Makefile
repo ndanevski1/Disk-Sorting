@@ -1,5 +1,5 @@
 CC = g++
-CCFLAGS = -O3 -Wall -g -ljsoncpp -pthread
+CCFLAGS = -Wall -g -ljsoncpp -pthread
 
 all: library.o msort bsort
 
@@ -9,7 +9,7 @@ library.o: library.cc library.h
 parse_schema.o: parse_schema.cc library.h
 	$(CC) -o $@ -c $< $(CCFLAGS)
 
-msort: msort.cc library.o parse_schema.o
+msort: msort.cc RunIterator.cc library.o parse_schema.o 
 	$(CC) -o $@ $^ $(CCFLAGS)
 
 bsort: bsort.cc

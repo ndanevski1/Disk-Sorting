@@ -1,3 +1,6 @@
+#ifndef _LIBRARY_H
+#define _LIBRARY_H
+
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -44,12 +47,8 @@ struct Record {
   Record(Schema *_schema, vector<string> _data) : schema(_schema), data(_data) {
   }
 };
-
-/**
- * Creates sorted runs of length `run_length` in
- * the `out_fp`.
- */
-void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema);
+int get_file_size(FILE *fp);
+vector<Record> get_records(char* buffer, int tuple_len, Schema &schema, int number_of_records);
 
 /**
  * The iterator helps you scan through a run.
@@ -57,29 +56,55 @@ void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema);
  */
 class RunIterator {
   /**
-   * Creates an interator using the `buf_size` to
-   * scan through a run that starts at `start_pos`
-   * with length `run_length`.
+   * Creates an iterator which uses a buffer with
+   * size `buf_size` to scan through a run that 
+   * starts at file offset `start_pos` with 
+   * length `run_length`.
    */
-  RunIterator(FILE *fp, long start_pos, long run_length, long buf_size,
-              Schema *schema);
+  private:
+    Schema &schema;
+    FILE *fp;
+    long curr_pos;
+    long run_length;
+    vector<Record> cur_buffer;
+    Record cur_record;
+    int tuples_left; //from the entire run
+    int buffer_index;
+    int tuples_in_buf;
 
-  /**
-   * free memory
-   */
-  ~RunIterator();
+    
 
-  /**
-   * reads the next record
-   */
-  Record* next();
-
-  /**
-   * return false if iterator reaches the end
-   * of the run
-   */
-  bool has_next();
+  public:
+    RunIterator(FILE *_fp, long _start_pos, long _run_length, long buf_size,
+    Schema *_schema) : schema(*_schema), fp(_fp), curr_pos(_start_pos), run_length(_run_length) {
+        int tuple_len = schema.get_schema_length() + schema.attrs.size();
+        assert(buf_size >= tuple_len);
+        tuples_left = min(run_length, get_file_size(_fp) - _start_pos) / tuple_len;
+        tuples_in_buf = buf_size / tuple_len;
+        buffer_index = 0;
+        cur_buffer.reserve(tuples_in_buf);
+    };
+    /**
+     * free memory
+     */
+    // ~RunIterator();   
+    /**
+     * reads the next record
+     */
+    Record* next();
+    
+    /**
+     * return false if iterator reaches the end
+     * of the run
+     */
+    bool has_next();
 };
+
+/**
+ * Creates sorted runs of length `run_length` in
+ * the `out_fp`.
+ */
+void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema);
 
 /**
  * Merge runs given by the `iterators`.
@@ -90,3 +115,4 @@ class RunIterator {
 void merge_runs(RunIterator* iterators[], int num_runs, FILE *out_fp,
                 long start_pos, char *buf, long buf_size);
 
+#endif

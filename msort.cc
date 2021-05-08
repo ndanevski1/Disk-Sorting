@@ -10,6 +10,12 @@
 
 using namespace std;
 
+void print_record(Record r) {
+  for(auto value: r.data)
+    cout << value;
+  cout << endl;
+}
+
 int main(int argc, const char* argv[]) {
   // if (argc < 7) {
   //   cout << "ERROR: invalid input parameters!" << endl;
@@ -47,15 +53,17 @@ int main(int argc, const char* argv[]) {
   string filename_in = "csv.csv";
   string filename_out = "csvOut.csv";
   FILE *in_fp = fopen(filename_in.c_str(), "r");
-  FILE *out_fp = fopen(filename_out.c_str(), "w");
+  FILE *out_fp = fopen(filename_out.c_str(), "w+");
 
   vector<string> sort_attrs_name = {"start_year", "student_number"};
   Schema schema = parse_schema("schema_example.json", sort_attrs_name);
     
   mk_runs(in_fp, out_fp, 2000, schema);
 
-
-
-  
+  RunIterator r_iter(out_fp, 0, 2000, 250, &schema);
+  while(r_iter.has_next()) {
+    Record* rec = r_iter.next();
+    print_record(*rec);
+  }
   return 0;
 }
