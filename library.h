@@ -46,6 +46,7 @@ struct Record {
   }
   Record(Schema *_schema, vector<string> _data) : schema(_schema), data(_data) {
   }
+  void print();
 };
 int get_file_size(FILE *fp);
 vector<Record> get_records(char* buffer, int tuple_len, Schema &schema, int number_of_records);
@@ -72,8 +73,6 @@ class RunIterator {
     int buffer_index;
     int tuples_in_buf;
 
-    
-
   public:
     RunIterator(FILE *_fp, long _start_pos, long _run_length, long buf_size,
     Schema *_schema) : schema(*_schema), fp(_fp), curr_pos(_start_pos), run_length(_run_length) {
@@ -84,6 +83,7 @@ class RunIterator {
         buffer_index = 0;
         cur_buffer.reserve(tuples_in_buf);
     };
+    Schema get_schema();
     /**
      * free memory
      */
@@ -112,7 +112,7 @@ void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema);
  * Write the merged runs to `out_fp` starting at position `start_pos`.
  * Cannot use more than `buf_size` of heap memory allocated to `buf`.
  */
-void merge_runs(RunIterator* iterators[], int num_runs, FILE *out_fp,
-                long start_pos, char *buf, long buf_size);
+void merge_runs(vector<RunIterator> &iterators, int num_runs, FILE *out_fp,
+                long start_pos, char *buf, long buf_size, int tuples_in_runs);
 
 #endif

@@ -42,3 +42,7 @@ bool RunIterator::has_next() {
     
     return true;
 }
+
+Schema RunIterator::get_schema() {
+    return schema;
+}
