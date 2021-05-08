@@ -61,13 +61,12 @@ int main(int argc, const char* argv[]) {
   
   RunIterator r_iter_1(fp_runs, 0, 150, 150, &schema);
   RunIterator r_iter_2(fp_runs, 145, 150, 150, &schema);
-  vector<RunIterator> iterators;
-  iterators.push_back(r_iter_1);
-  iterators.push_back(r_iter_2);
+  vector<RunIterator *> iterators;
+  iterators.push_back(&r_iter_1);
+  iterators.push_back(&r_iter_2);
 
-  char* buf = new char[1000];
-  int tuples_in_runs = 10;
-  
-  merge_runs(iterators, 2, out_fp, 0, buf, 100, tuples_in_runs);
+  char* buf = new char[100];
+  merge_runs(iterators, out_fp, 0, buf, 100);
+  delete[] buf;
   return 0;
 }

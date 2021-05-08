@@ -112,7 +112,7 @@ void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema);
  * Write the merged runs to `out_fp` starting at position `start_pos`.
  * Cannot use more than `buf_size` of heap memory allocated to `buf`.
  */
-void merge_runs(vector<RunIterator> &iterators, int num_runs, FILE *out_fp,
-                long start_pos, char *buf, long buf_size, int tuples_in_runs);
+void merge_runs(vector<RunIterator *> &iterators, FILE *out_fp,
+                long start_pos, char *buf, long buf_size);
 
 #endif

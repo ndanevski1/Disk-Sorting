@@ -86,7 +86,7 @@ vector<Record> get_records(char* buffer, int tuple_len, Schema &schema, int numb
 }
 
 // a comparator for records
-bool compareRecords(Record r1, Record r2) {
+bool compareRecords(const Record& r1, const Record& r2) {
   int sorting_attr = r1.schema->sort_attrs[0];
   return (r1.data[sorting_attr] < r2.data[sorting_attr]);
 }
@@ -120,72 +120,61 @@ void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema)
   delete[] tuple;
 }
 
-void merge_runs(vector<RunIterator> &iterators, int num_runs, FILE *out_fp,
-  long start_pos, char *buf, long buf_size, int tuples_in_runs)
+void merge_runs(vector<RunIterator *> &iterators, FILE *out_fp,
+  long start_pos, char *buf, long buf_size)
 {
-  assert(iterators.size() == (unsigned int) num_runs);
+  int num_runs = iterators.size();
 
-  vector<int> indices(num_runs, 0);
-
-  int tuples_left = tuples_in_runs;
-  int tuple_len = iterators[0].get_schema().get_schema_length() + iterators[0].get_schema().attrs.size();
-  vector<Record*> next_records(num_runs, nullptr);
-
-  int starting_record_to_write = 0;
-  int buffer_position = 0;
+  int tuple_len = iterators[0]->get_schema().get_schema_length() + iterators[0]->get_schema().attrs.size();
+  vector<Record*> next_records(num_runs);
   
-  for(int j = 0; j < tuples_in_runs; j++) {
-    Record* next_rec = nullptr;
+  int running_iterators = 0;
+  for(int i = 0; i < num_runs; i++){
+    if(iterators[i]->has_next()){
+      next_records[i] = iterators[i]->next();
+      running_iterators++;
+    }
+  }
+
+  int buffer_position = 0;
+  int buffer_record_count = 0;
+  
+  while(running_iterators > 0){
+    Record *next_rec = nullptr;
     int iterator_index = -1;
     for(int i = 0; i < num_runs; i++) {
-      // there is no way to check if iterators[i].next() == nullptr, so I just check
-      // if it has no data saved inside (i.e. it is equal ot Record())
-      if (iterators[i].next()->data.size() == 0 && iterators[i].has_next()) {
-        // at this point .next() is updated.
-        next_records[i] = iterators[i].next();
-      }
       //meaning there is no next in the current run
       if(next_records[i] == nullptr) {
         continue;
       }  
-      if(next_rec == nullptr) {
-        next_rec = next_records[i];
-        iterator_index = i;
-      }
-      else if (compareRecords(*next_records[i], *next_rec)) {
+      if(iterator_index == -1 or compareRecords(*next_records[i], *next_records[iterator_index])) {
         next_rec = next_records[i];
         iterator_index = i;
       }
     }
-    if(iterator_index != -1) {
-      // cout << "Printing a sorted record: " ;
-      // next_rec->print();
-      print_record_to_buf(next_rec, buf, buffer_position);
-      buffer_position += tuple_len;
-      
-      int current_number_of_tuples = j - starting_record_to_write + 1; // we start from zero
-      if(current_number_of_tuples * tuple_len <= buf_size &&
-          (current_number_of_tuples + 1) * tuple_len > buf_size) {
-            // write buf to disk and set it to a new char* []
-            fseek(out_fp, start_pos, SEEK_SET);
-            fwrite(buf, 1, current_number_of_tuples * tuple_len, out_fp);
-            start_pos += current_number_of_tuples * tuple_len;
-            tuples_left -= current_number_of_tuples;
-            starting_record_to_write = j + 1;
-            delete[] buf;
-            buffer_position = 0;
-            buf = new char[buf_size];
-            // cout << "tuples_left = " << tuples_left << endl;
-      }
-      if(iterators[iterator_index].has_next())
-        next_records[iterator_index] = iterators[iterator_index].next();
-      else
-        next_records[iterator_index] = nullptr;
+    assert(iterator_index != -1);
+
+    // cout << "Printing a sorted record: " ;
+    // next_rec->print();
+    print_record_to_buf(next_rec, buf, buffer_position);
+    buffer_position += tuple_len;
+    buffer_record_count++;
+    
+    if(buffer_position + tuple_len > buf_size) {
+      // write buf to disk and set it to a new char* []
+      fwrite(buf, 1, buffer_position, out_fp);
+      buffer_position = 0;
+      // cout << "tuples_left = " << tuples_left << endl;
+    }
+    if(iterators[iterator_index]->has_next()) {
+      next_records[iterator_index] = iterators[iterator_index]->next();
+    } else {
+      next_records[iterator_index] = nullptr;
+      running_iterators--;
     }
   }
 
   // write the last part of the buffer to disk
   // cout << "buf = " << endl << buf;
-  fseek (out_fp, start_pos, SEEK_SET);
-  fwrite(buf, 1, tuples_left * tuple_len, out_fp);
+  fwrite(buf, 1, buffer_position, out_fp);
 }
