@@ -12,7 +12,8 @@ parse_schema.o: parse_schema.cc library.h
 msort: msort.cc RunIterator.cc library.o parse_schema.o 
 	$(CC) -o $@ $^ $(CCFLAGS)
 
-bsort: bsort.cc
+bsort: bsort.cc RunIterator.cc library.o parse_schema.o
+	$(CC) -o $@ $^ $(CCFLAGS) -lleveldb
 
 clean:
 	rm -rf *.o msort bsort msort.dSYM bsort.dSYM

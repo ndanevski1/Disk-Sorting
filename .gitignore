@@ -35,3 +35,4 @@ msort
 bsort
 leveldb/
 .vscode/
+leveldb_dir/
