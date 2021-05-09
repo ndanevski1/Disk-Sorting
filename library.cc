@@ -120,21 +120,22 @@ void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema)
   delete[] tuple;
 }
 
+
 void merge_runs(vector<RunIterator> &iterators, int num_runs, FILE *out_fp,
-  long start_pos, char *buf, long buf_size, int tuples_in_runs)
+  long start_pos, char *buf, long buf_size, int total_tuples)
 {
   assert(iterators.size() == (unsigned int) num_runs);
 
   vector<int> indices(num_runs, 0);
 
-  int tuples_left = tuples_in_runs;
+  int tuples_left = total_tuples;
   int tuple_len = iterators[0].get_schema().get_schema_length() + iterators[0].get_schema().attrs.size();
   vector<Record*> next_records(num_runs, nullptr);
 
   int starting_record_to_write = 0;
   int buffer_position = 0;
   
-  for(int j = 0; j < tuples_in_runs; j++) {
+  for(int j = 0; j < total_tuples; j++) {
     Record* next_rec = nullptr;
     int iterator_index = -1;
     for(int i = 0; i < num_runs; i++) {
