@@ -33,7 +33,7 @@ int main(int argc, const char* argv[]) {
   }
   Schema schema = parse_schema(schema_file, sort_attrs_name);
 
-  int run_length = mem_capacity_for_use - mem_capacity_for_use % schema.get_serializing_length(); 
+  int run_length = mem_capacity_for_use - mem_capacity_for_use % schema.get_serializing_length();
   int file_size = get_file_size(in_fp);
 
   FILE *curr_run_fp = run_fps[0];
@@ -42,14 +42,14 @@ int main(int argc, const char* argv[]) {
   }
 
   mk_runs(in_fp, curr_run_fp, run_length, schema);
-  
+
   fclose(in_fp);
   cout << "Did runs" << endl;
-  
+
   while(run_length < file_size){
     int num_runs = (file_size + run_length - 1) / run_length;
-    vector<RunIterator *> iterators(k);
     int buffer_per_run = mem_capacity_for_use / (k + 1);
+    buffer_per_run -= buffer_per_run % schema.get_serializing_length();
 
     FILE *next_file;
     if(run_length * k >= file_size){
@@ -61,25 +61,23 @@ int main(int argc, const char* argv[]) {
     fseek(curr_run_fp, 0, SEEK_SET);
 
     for(int i = 0; i < num_runs; i += k){
+      vector<RunIterator *> iterators;
       for(int j = 0; j < k; j++){
-        if(run_length * (k * i + j) < file_size){
-          iterators[j] = new RunIterator(curr_run_fp, 
-            run_length * (k * i + j), run_length, buffer_per_run, &schema);
-        } else {
-          iterators[j] = new RunIterator(curr_run_fp, 
-            file_size, 0, buffer_per_run, &schema);
+        if(run_length * (i + j) < file_size){
+          iterators.push_back(new RunIterator(curr_run_fp,
+            run_length * (i + j), run_length, buffer_per_run, &schema, file_size / schema.get_serializing_length()));
         }
       }
 
       char* buf = new char[buffer_per_run];
-      merge_runs(iterators, next_file, 0, buf, buffer_per_run);
+      merge_runs(iterators, next_file, i * run_length, buf, buffer_per_run);
       delete[] buf;
 
-      for(int j = 0; j < k;j++){
+      for(int j = 0; j < iterators.size(); j++){
         delete iterators[j];
       }
     }
-    
+
     run_length *= k;
     cout << "Sorted in blocks of " << run_length << endl;
 
@@ -87,7 +85,7 @@ int main(int argc, const char* argv[]) {
     std::swap(run_fps[0], run_fps[1]);
   }
 
-  fclose(run_fps[0]);  
+  fclose(run_fps[0]);
   fclose(run_fps[1]);
   remove(run_filenames[0].c_str());
   remove(run_filenames[1].c_str());

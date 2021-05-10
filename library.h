@@ -23,8 +23,8 @@ struct Attribute {
 
 /**
  * A record schema contains an array of attribute
- * schema `attrs`, as well as an array of sort-by 
- * attributes (represented as the indices of the 
+ * schema `attrs`, as well as an array of sort-by
+ * attributes (represented as the indices of the
  * `attrs` array).
  */
 struct Schema {
@@ -37,7 +37,7 @@ struct Schema {
 
 /**
  * A record can be defined as a struct with a pointer
- * to the schema and some data. 
+ * to the schema and some data.
  */
 struct Record {
   Schema *schema;
@@ -58,8 +58,8 @@ vector<Record> get_records(char* buffer, int tuple_len, Schema &schema, int numb
 class RunIterator {
   /**
    * Creates an iterator which uses a buffer with
-   * size `buf_size` to scan through a run that 
-   * starts at file offset `start_pos` with 
+   * size `buf_size` to scan through a run that
+   * starts at file offset `start_pos` with
    * length `run_length`.
    */
   private:
@@ -75,10 +75,10 @@ class RunIterator {
 
   public:
     RunIterator(FILE *_fp, long _start_pos, long _run_length, long buf_size,
-    Schema *_schema) : schema(*_schema), fp(_fp), curr_pos(_start_pos), run_length(_run_length) {
+    Schema *_schema, int total_tuples) : schema(*_schema), fp(_fp), curr_pos(_start_pos), run_length(_run_length) {
         int tuple_len = schema.get_serializing_length();
         assert(buf_size >= tuple_len);
-        tuples_left = min(run_length, get_file_size(_fp) - _start_pos) / tuple_len;
+        tuples_left = min(run_length, total_tuples * tuple_len - _start_pos) / tuple_len;
         tuples_in_buf = buf_size / tuple_len;
         buffer_index = 0;
         cur_buffer.reserve(tuples_in_buf);
@@ -87,12 +87,12 @@ class RunIterator {
     /**
      * free memory
      */
-    // ~RunIterator();   
+    // ~RunIterator();
     /**
      * reads the next record
      */
     Record* next();
-    
+
     /**
      * return false if iterator reaches the end
      * of the run

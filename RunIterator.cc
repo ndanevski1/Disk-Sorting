@@ -16,12 +16,12 @@ bool RunIterator::has_next() {
 
     // buffer_index == cur_buffer.size() -> get new buffer
     if(buffer_index == (int) cur_buffer.size()) {
-        if(tuples_left == 0)
+        if(tuples_left <= 0)
             return false;
 
         int read_tuples = min(tuples_left, tuples_in_buf);
         int tuple_len = schema.get_serializing_length();
-        
+
         char* buf_tupples = new char[read_tuples * tuple_len+1];
         fseek(fp, curr_pos, SEEK_SET);
         curr_pos += read_tuples * tuple_len;
@@ -29,7 +29,7 @@ bool RunIterator::has_next() {
 
         buf_tupples[read_tuples * tuple_len] = 0;
         // cout << "BUFF_TUPLES = " << buf_tupples << endl;
-        
+
         // create the buffer
         cur_buffer = get_records(buf_tupples, tuple_len, schema, read_tuples);
         buffer_index = 0;
@@ -39,7 +39,7 @@ bool RunIterator::has_next() {
     }
     cur_record = cur_buffer[buffer_index];
     buffer_index++;
-    
+
     return true;
 }
 
