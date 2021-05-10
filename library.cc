@@ -87,8 +87,13 @@ vector<Record> get_records(char* buffer, int tuple_len, Schema &schema, int numb
 
 // a comparator for records
 bool compareRecords(const Record& r1, const Record& r2) {
-  int sorting_attr = r1.schema->sort_attrs[0];
-  return (r1.data[sorting_attr] < r2.data[sorting_attr]);
+  for(int sort_attr : r1.schema->sort_attrs){
+    int c = r1.data[sort_attr].compare(r2.data[sort_attr]);
+    if(c != 0){
+      return c < 0;
+    }
+  }
+  return 0;
 }
 
 void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema)
