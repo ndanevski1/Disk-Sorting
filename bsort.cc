@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
+#include <chrono>
 
 #include "leveldb/db.h"
 #include "leveldb/options.h"
@@ -13,6 +14,7 @@
 
 
 using namespace std;
+using namespace std::chrono;
 
 vector<string> parse_tuple(string tuple){
 	stringstream ss(tuple);
@@ -34,6 +36,8 @@ int main(int argc, const char* argv[]) {
 		cout << "Please enter <schema_file> <input_file> <out_index> <sorting_attributes>" << endl;
 		exit(1);
 	}
+	auto start_time = high_resolution_clock::now();
+
 	string schema_file(argv[1]);
 	string input_file(argv[2]);
 	string out_index(argv[3]);
@@ -42,7 +46,7 @@ int main(int argc, const char* argv[]) {
 	leveldb::Options options;
 	options.create_if_missing = true;
 	options.error_if_exists = true;
-	leveldb::Status status = leveldb::DB::Open(options, out_index, &db);
+	leveldb::Status status = leveldb::DB::Open(options, ("./" + out_index + "db"), &db);
 	if(!status.ok()){
 		cerr << status.ToString() << endl;
 		exit(-1);
@@ -55,7 +59,8 @@ int main(int argc, const char* argv[]) {
 	Schema schema = parse_schema(schema_file, sort_attrs_name);
 
 	ifstream input(input_file);
-	ofstream output(out_index);
+	ofstream output;
+	output.open(out_index);
 
 	long counter = 1;
 	for(string tuple; getline(input, tuple);) {
@@ -84,5 +89,9 @@ int main(int argc, const char* argv[]) {
 	delete it;
 
 	output.close();
+
+	auto end_time = high_resolution_clock::now();
+ 	auto duration = duration_cast<seconds>(end_time - start_time);
+  	std::cerr << "BSORT TIME: " << duration.count() << " seconds." << std::endl;
 	return 0;
 }

@@ -2,11 +2,14 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
+#include <chrono>
 
 #include "parse_schema.h"
 #include <jsoncpp/json/json.h>
 
 using namespace std;
+using namespace std::chrono;
+
 
 int main(int argc, const char* argv[]) {
   if (argc < 7) {
@@ -14,6 +17,8 @@ int main(int argc, const char* argv[]) {
     cout << "Please enter <schema_file> <input_file> <output_file> <mem_capacity> <k> <sorting_attributes>" << endl;
     exit(1);
   }
+  auto start_time = high_resolution_clock::now();
+
   string schema_file(argv[1]);
 
   string filename_in = argv[2];
@@ -91,5 +96,9 @@ int main(int argc, const char* argv[]) {
   remove(run_filenames[1].c_str());
 
   fclose(out_fp);
+
+  auto end_time = high_resolution_clock::now();
+  auto duration = duration_cast<seconds>(end_time - start_time);
+  std::cerr << "MSORT TIME: " << duration.count() << " seconds." << std::endl;
   return 0;
 }
