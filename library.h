@@ -32,7 +32,7 @@ struct Schema {
   vector<int> sort_attrs;
   Schema(vector<Attribute> _attrs, vector<int> _sort_attrs) : attrs(_attrs), sort_attrs(_sort_attrs) {
   }
-  int get_schema_length();
+  int get_serializing_length();
 };
 
 /**
@@ -76,7 +76,7 @@ class RunIterator {
   public:
     RunIterator(FILE *_fp, long _start_pos, long _run_length, long buf_size,
     Schema *_schema) : schema(*_schema), fp(_fp), curr_pos(_start_pos), run_length(_run_length) {
-        int tuple_len = schema.get_schema_length() + schema.attrs.size();
+        int tuple_len = schema.get_serializing_length();
         assert(buf_size >= tuple_len);
         tuples_left = min(run_length, get_file_size(_fp) - _start_pos) / tuple_len;
         tuples_in_buf = buf_size / tuple_len;

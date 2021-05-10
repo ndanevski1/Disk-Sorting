@@ -4,78 +4,94 @@
 #include <fstream>
 
 #include "parse_schema.h"
-// #include "json/json.h"
 #include <jsoncpp/json/json.h>
-
 
 using namespace std;
 
 int main(int argc, const char* argv[]) {
-  // if (argc < 7) {
-  //   cout << "ERROR: invalid input parameters!" << endl;
-  //   cout << "Please enter <schema_file> <input_file> <output_file> <mem_capacity> <k> <sorting_attributes>" << endl;
-  //   exit(1);
-  // }
-  // string schema_file(argv[1]);
+  if (argc < 7) {
+    cout << "ERROR: invalid input parameters!" << endl;
+    cout << "Please enter <schema_file> <input_file> <output_file> <mem_capacity> <k> <sorting_attributes>" << endl;
+    exit(1);
+  }
+  string schema_file(argv[1]);
 
-  // // Parse the schema JSON file
-  // Json::Value schema;
-  // Json::Reader json_reader;
-  // // Support for std::string argument is added in C++11
-  // // so you don't have to use .c_str() if you are on that.
-  // ifstream schema_file_istream(schema_file.c_str(), ifstream::binary);
-  // bool successful = json_reader.parse(schema_file_istream, schema, false);
-  // if (!successful) {
-  //   cout << "ERROR: " << json_reader.getFormatedErrorMessages() << endl;
-  //   exit(1);
-  // }
-
-  // // Print out the schema
-  // string attr_name;
-  // int attr_len;
-  // for (int i = 0; i < schema.size(); ++i) {
-  //   attr_name = schema[i].get("name", "UTF-8" ).asString();
-  //   attr_len = schema[i].get("length", "UTF-8").asInt();
-  //   cout << "{name : " << attr_name << ", length : " << attr_len << "}" << endl;
-  // }
-
-  // Do the sort
-  // Your implementation
-
-  
-
-  string filename_in = "csv10000.csv";
-  string filename_runs = "csv_runs10000.csv";
-  string filename_out = "csv_out10000.csv";
+  string filename_in = argv[2];
+  vector<string> run_filenames = {"csvRuns1.csv", "csvRuns2.csv"};
+  string filename_out = argv[3];
   FILE *in_fp = fopen(filename_in.c_str(), "r");
-  FILE *fp_runs = fopen(filename_runs.c_str(), "w+");
+  vector<FILE *> run_fps = {fopen(run_filenames[0].c_str(), "w+"), fopen(run_filenames[1].c_str(), "w+")};
   FILE *out_fp = fopen(filename_out.c_str(), "w+");
-  int k = 10;
-  int mem_capacity = 30000;
-  int mem_capacity_for_use = 8*mem_capacity/10; // = 80% = 24000
 
-  vector<string> sort_attrs_name = {"start_year", "student_number"};
-  Schema schema = parse_schema("schema_example.json", sort_attrs_name);
+  int mem_capacity = atoi(argv[4]);
+  int k = atoi(argv[5]);
+  int mem_capacity_for_use = 8*mem_capacity/10;
 
-  int run_length = mem_capacity_for_use; // = 24000  
-  mk_runs(in_fp, fp_runs, run_length, schema);
+  vector<string> sort_attrs_name;
+  for(int i = 6; i < argc; i++){
+    sort_attrs_name.push_back(argv[i]);
+  }
+  Schema schema = parse_schema(schema_file, sort_attrs_name);
 
-  int tuple_len = 29;
-  int file_size = 290000;
-  // why exactly do we need k? Also asked on piazza.
-  int number_of_runs = (file_size + run_length -1) / run_length; // = 13
-  int tuples_in_run = run_length / tuple_len; // = 827
-  int total_tuples = 10000;
+  int run_length = mem_capacity_for_use - mem_capacity_for_use % schema.get_serializing_length(); 
+  int file_size = get_file_size(in_fp);
 
-  vector<RunIterator *> iterators;
-  for(int i = 0; i < number_of_runs; i++) {
-    iterators.push_back(new RunIterator(fp_runs, tuple_len*i*tuples_in_run, run_length, run_length/number_of_runs, &schema));
+  FILE *curr_run_fp = run_fps[0];
+  if(run_length >= file_size){
+    curr_run_fp = out_fp;
   }
 
-  long buf_size = 1000;
-  char* buf = new char[buf_size];
+  mk_runs(in_fp, curr_run_fp, run_length, schema);
   
-  merge_runs(iterators, out_fp, 0, buf, buf_size);
-  delete[] buf;
+  fclose(in_fp);
+  cout << "Did runs" << endl;
+  
+  while(run_length < file_size){
+    int num_runs = (file_size + run_length - 1) / run_length;
+    vector<RunIterator *> iterators(k);
+    int buffer_per_run = mem_capacity_for_use / (k + 1);
+
+    FILE *next_file;
+    if(run_length * k >= file_size){
+      next_file = out_fp;
+    } else {
+      next_file = run_fps[1];
+    }
+    fseek(next_file, 0, SEEK_SET);
+    fseek(curr_run_fp, 0, SEEK_SET);
+
+    for(int i = 0; i < num_runs; i += k){
+      for(int j = 0; j < k; j++){
+        if(run_length * (k * i + j) < file_size){
+          iterators[j] = new RunIterator(curr_run_fp, 
+            run_length * (k * i + j), run_length, buffer_per_run, &schema);
+        } else {
+          iterators[j] = new RunIterator(curr_run_fp, 
+            file_size, 0, buffer_per_run, &schema);
+        }
+      }
+
+      char* buf = new char[buffer_per_run];
+      merge_runs(iterators, next_file, 0, buf, buffer_per_run);
+      delete[] buf;
+
+      for(int j = 0; j < k;j++){
+        delete iterators[j];
+      }
+    }
+    
+    run_length *= k;
+    cout << "Sorted in blocks of " << run_length << endl;
+
+    curr_run_fp = run_fps[1];
+    std::swap(run_fps[0], run_fps[1]);
+  }
+
+  fclose(run_fps[0]);  
+  fclose(run_fps[1]);
+  remove(run_filenames[0].c_str());
+  remove(run_filenames[1].c_str());
+
+  fclose(out_fp);
   return 0;
 }

@@ -1,5 +1,5 @@
 CC = g++
-CCFLAGS = -Wall -g -ljsoncpp -pthread
+CCFLAGS = -Wall -O3 -g -ljsoncpp -pthread
 
 all: library.o msort bsort
 

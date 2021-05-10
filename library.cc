@@ -11,8 +11,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int Schema::get_schema_length() {
-  int len = 0;
+int Schema::get_serializing_length() {
+  int len = this->attrs.size();
   for (auto attr: this->attrs) {
     len += attr.length;
   }
@@ -93,7 +93,7 @@ bool compareRecords(const Record& r1, const Record& r2) {
 
 void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema)
 {
-  int tuple_len = schema.get_schema_length() + schema.attrs.size();
+  int tuple_len = schema.get_serializing_length();
   assert(run_length >= tuple_len);
   int tuples_in_run = run_length / tuple_len;
   int file_size = get_file_size(in_fp);
@@ -125,7 +125,7 @@ void merge_runs(vector<RunIterator *> &iterators, FILE *out_fp,
 {
   int num_runs = iterators.size();
 
-  int tuple_len = iterators[0]->get_schema().get_schema_length() + iterators[0]->get_schema().attrs.size();
+  int tuple_len = iterators[0]->get_schema().get_serializing_length();
   vector<Record*> next_records(num_runs);
 
   int running_iterators = 0;

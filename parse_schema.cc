@@ -17,9 +17,17 @@ type to_type(string s) {
 }
 
 Schema parse_schema(string schema_file, vector<string> sort_attrs_name) {
-    ifstream read_file(schema_file);
+    // Parse the schema JSON file
     Json::Value root;
-    read_file >> root;
+    Json::Reader json_reader;
+    // Support for std::string argument is added in C++11
+    // so you don't have to use .c_str() if you are on that.
+    ifstream schema_file_istream(schema_file.c_str(), ifstream::binary);
+    bool successful = json_reader.parse(schema_file_istream, root, false);
+    if (!successful) {
+        cout << "ERROR: " << json_reader.getFormattedErrorMessages() << endl;
+        exit(1);
+    }  
 
     vector<Attribute> attrs;
     vector<int> sort_attrs;
