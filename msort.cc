@@ -44,29 +44,38 @@ int main(int argc, const char* argv[]) {
 
   
 
-  string filename_in = "csv.csv";
-  string filename_runs = "csv_runs.csv";
-  string filename_out = "csv_out.csv";
+  string filename_in = "csv10000.csv";
+  string filename_runs = "csv_runs10000.csv";
+  string filename_out = "csv_out10000.csv";
   FILE *in_fp = fopen(filename_in.c_str(), "r");
   FILE *fp_runs = fopen(filename_runs.c_str(), "w+");
   FILE *out_fp = fopen(filename_out.c_str(), "w+");
-
+  int k = 10;
+  int mem_capacity = 30000;
+  int mem_capacity_for_use = 8*mem_capacity/10; // = 80% = 24000
 
   vector<string> sort_attrs_name = {"start_year", "student_number"};
   Schema schema = parse_schema("schema_example.json", sort_attrs_name);
-    
-  mk_runs(in_fp, fp_runs, 150, schema);
 
-  
-  
-  RunIterator r_iter_1(fp_runs, 0, 150, 150, &schema);
-  RunIterator r_iter_2(fp_runs, 145, 150, 150, &schema);
+  int run_length = mem_capacity_for_use; // = 24000  
+  mk_runs(in_fp, fp_runs, run_length, schema);
+
+  int tuple_len = 29;
+  int file_size = 290000;
+  // why exactly do we need k? Also asked on piazza.
+  int number_of_runs = (file_size + run_length -1) / run_length; // = 13
+  int tuples_in_run = run_length / tuple_len; // = 827
+  int total_tuples = 10000;
+
   vector<RunIterator *> iterators;
-  iterators.push_back(&r_iter_1);
-  iterators.push_back(&r_iter_2);
+  for(int i = 0; i < number_of_runs; i++) {
+    iterators.push_back(new RunIterator(fp_runs, tuple_len*i*tuples_in_run, run_length, run_length/number_of_runs, &schema));
+  }
 
-  char* buf = new char[100];
-  merge_runs(iterators, out_fp, 0, buf, 100);
+  long buf_size = 1000;
+  char* buf = new char[buf_size];
+  
+  merge_runs(iterators, out_fp, 0, buf, buf_size);
   delete[] buf;
   return 0;
 }

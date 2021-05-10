@@ -28,10 +28,10 @@ void Record::print() {
 int get_file_size(FILE *fp) {
   // return # of bytes
   // source: https://www.codegrepper.com/code-examples/c/how+to+check+the+size+of+a+file+in+linux+c
-  
+
   fseek(fp, 0, SEEK_END); // seek to end of file
   auto size = ftell(fp); // get current file pointer
-  fseek(fp, 0, SEEK_SET); 
+  fseek(fp, 0, SEEK_SET);
   return size;
 }
 
@@ -47,7 +47,7 @@ Record char2record(char* tuple, Schema &schema) {
   }
   Record rec(&schema, data);
   return rec;
-} 
+}
 
 char* print_records(vector<Record> records, int tuple_len) {
   char* res = new char[records.size() * tuple_len + 1];
@@ -62,7 +62,7 @@ char* print_records(vector<Record> records, int tuple_len) {
     }
     res[index-1] = '\n';
   }
-  res[index] = 0; 
+  res[index] = 0;
   return res;
 }
 void print_record_to_buf(Record* rec, char* buf, int position) {
@@ -74,7 +74,7 @@ void print_record_to_buf(Record* rec, char* buf, int position) {
     index++;
   }
   buf[position + index-1] = '\n';
-  buf[position + index] = 0; 
+  buf[position + index] = 0;
 }
 
 vector<Record> get_records(char* buffer, int tuple_len, Schema &schema, int number_of_records) {
@@ -108,13 +108,13 @@ void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema)
 
       getline(&tuple, (size_t*)(&getline_arg), in_fp);
       // cout << getline_arg << ' ' << strlen(tuple) << endl;
-      records[i] = char2record(tuple, schema);       
+      records[i] = char2record(tuple, schema);
     }
     sort(records.begin(), records.begin() + min(tuples_left, tuples_in_run), compareRecords);
     char* records_for_disk = print_records(records, tuple_len);
     fwrite(records_for_disk, 1, min(tuples_left, tuples_in_run) * tuple_len, out_fp);
     delete[] records_for_disk;
-    
+
     tuples_left -= tuples_in_run;
   }
   delete[] tuple;
@@ -127,7 +127,7 @@ void merge_runs(vector<RunIterator *> &iterators, FILE *out_fp,
 
   int tuple_len = iterators[0]->get_schema().get_schema_length() + iterators[0]->get_schema().attrs.size();
   vector<Record*> next_records(num_runs);
-  
+
   int running_iterators = 0;
   for(int i = 0; i < num_runs; i++){
     if(iterators[i]->has_next()){
@@ -138,7 +138,7 @@ void merge_runs(vector<RunIterator *> &iterators, FILE *out_fp,
 
   int buffer_position = 0;
   int buffer_record_count = 0;
-  
+
   while(running_iterators > 0){
     Record *next_rec = nullptr;
     int iterator_index = -1;
@@ -146,7 +146,7 @@ void merge_runs(vector<RunIterator *> &iterators, FILE *out_fp,
       //meaning there is no next in the current run
       if(next_records[i] == nullptr) {
         continue;
-      }  
+      }
       if(iterator_index == -1 or compareRecords(*next_records[i], *next_records[iterator_index])) {
         next_rec = next_records[i];
         iterator_index = i;
@@ -159,7 +159,7 @@ void merge_runs(vector<RunIterator *> &iterators, FILE *out_fp,
     print_record_to_buf(next_rec, buf, buffer_position);
     buffer_position += tuple_len;
     buffer_record_count++;
-    
+
     if(buffer_position + tuple_len > buf_size) {
       // write buf to disk and set it to a new char* []
       fwrite(buf, 1, buffer_position, out_fp);
