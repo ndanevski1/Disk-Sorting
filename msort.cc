@@ -28,18 +28,19 @@ int main(int argc, const char* argv[]) {
   vector<FILE *> run_fps = {fopen(run_filenames[0].c_str(), "w+"), fopen(run_filenames[1].c_str(), "w+")};
   FILE *out_fp = fopen(filename_out.c_str(), "w+");
 
-  int mem_capacity = atoi(argv[4]);
-  int k = atoi(argv[5]);
-  int mem_capacity_for_use = 8*mem_capacity/10;
+  long mem_capacity = atoi(argv[4]);
+  long k = atoi(argv[5]);
+  long mem_capacity_for_use = 8*mem_capacity/10;
 
   vector<string> sort_attrs_name;
-  for(int i = 6; i < argc; i++){
+  for(long i = 6; i < argc; i++){
     sort_attrs_name.push_back(argv[i]);
   }
   Schema schema = parse_schema(schema_file, sort_attrs_name);
 
-  int run_length = mem_capacity_for_use - mem_capacity_for_use % schema.get_serializing_length();
-  int file_size = get_file_size(in_fp);
+  long run_length = mem_capacity_for_use - mem_capacity_for_use % schema.get_serializing_length();
+  long file_size = get_file_size(in_fp);
+  cout << file_size << endl;
 
   FILE *curr_run_fp = run_fps[0];
   if(run_length >= file_size){
@@ -52,8 +53,8 @@ int main(int argc, const char* argv[]) {
   cout << "Did runs" << endl;
 
   while(run_length < file_size){
-    int num_runs = (file_size + run_length - 1) / run_length;
-    int buffer_per_run = mem_capacity_for_use / (k + 1);
+    long num_runs = (file_size + run_length - 1) / run_length;
+    long buffer_per_run = mem_capacity_for_use / (k + 1);
     buffer_per_run -= buffer_per_run % schema.get_serializing_length();
 
     FILE *next_file;
@@ -65,9 +66,9 @@ int main(int argc, const char* argv[]) {
     fseek(next_file, 0, SEEK_SET);
     fseek(curr_run_fp, 0, SEEK_SET);
 
-    for(int i = 0; i < num_runs; i += k){
+    for(long i = 0; i < num_runs; i += k){
       vector<RunIterator *> iterators;
-      for(int j = 0; j < k; j++){
+      for(long j = 0; j < k; j++){
         if(run_length * (i + j) < file_size){
           iterators.push_back(new RunIterator(curr_run_fp,
             run_length * (i + j), run_length, buffer_per_run, &schema, file_size / schema.get_serializing_length()));
@@ -78,7 +79,7 @@ int main(int argc, const char* argv[]) {
       merge_runs(iterators, next_file, i * run_length, buf, buffer_per_run);
       delete[] buf;
 
-      for(int j = 0; j < iterators.size(); j++){
+      for(long j = 0; j < iterators.size(); j++){
         delete iterators[j];
       }
     }

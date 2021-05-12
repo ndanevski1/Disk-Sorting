@@ -52,7 +52,7 @@ int main(int argc, const char* argv[]) {
 		exit(-1);
 	}
 	vector<string> sort_attrs_name;
-    for(int i = 4; i < argc; i++){
+    for(long i = 4; i < argc; i++){
         string sort_attr(argv[i]);
         sort_attrs_name.push_back(sort_attr);
     }
@@ -66,7 +66,7 @@ int main(int argc, const char* argv[]) {
 	for(string tuple; getline(input, tuple);) {
 		string key_s = "";
 		vector<string> attributes = parse_tuple(tuple);
-		for(int i = 0; i < schema.sort_attrs.size(); i++){
+		for(long i = 0; i < schema.sort_attrs.size(); i++){
 			key_s += attributes[schema.sort_attrs[i]];
 			key_s += "_";
 		}

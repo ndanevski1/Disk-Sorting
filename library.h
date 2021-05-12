@@ -15,9 +15,9 @@ enum type{t_string, t_integer, t_float};
 
 struct Attribute {
   string name;
-  int length;
+  long length;
   type t;
-  Attribute(string _name, int _length, type _t) : name(_name), length(_length), t(_t) {
+  Attribute(string _name, long _length, type _t) : name(_name), length(_length), t(_t) {
   }
 };
 
@@ -32,7 +32,7 @@ struct Schema {
   vector<int> sort_attrs;
   Schema(vector<Attribute> _attrs, vector<int> _sort_attrs) : attrs(_attrs), sort_attrs(_sort_attrs) {
   }
-  int get_serializing_length();
+  long get_serializing_length();
 };
 
 /**
@@ -48,8 +48,8 @@ struct Record {
   }
   void print();
 };
-int get_file_size(FILE *fp);
-vector<Record> get_records(char* buffer, int tuple_len, Schema &schema, int number_of_records);
+long get_file_size(FILE *fp);
+vector<Record> get_records(char* buffer, long tuple_len, Schema &schema, long number_of_records);
 
 /**
  * The iterator helps you scan through a run.
@@ -69,14 +69,14 @@ class RunIterator {
     long run_length;
     vector<Record> cur_buffer;
     Record cur_record;
-    int tuples_left; //from the entire run
-    int buffer_index;
-    int tuples_in_buf;
+    long tuples_left; //from the entire run
+    long buffer_index;
+    long tuples_in_buf;
 
   public:
     RunIterator(FILE *_fp, long _start_pos, long _run_length, long buf_size,
-    Schema *_schema, int total_tuples) : schema(*_schema), fp(_fp), curr_pos(_start_pos), run_length(_run_length) {
-        int tuple_len = schema.get_serializing_length();
+    Schema *_schema, long total_tuples) : schema(*_schema), fp(_fp), curr_pos(_start_pos), run_length(_run_length) {
+        long tuple_len = schema.get_serializing_length();
         assert(buf_size >= tuple_len);
         tuples_left = min(run_length, total_tuples * tuple_len - _start_pos) / tuple_len;
         tuples_in_buf = buf_size / tuple_len;

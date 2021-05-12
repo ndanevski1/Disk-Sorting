@@ -19,8 +19,8 @@ bool RunIterator::has_next() {
         if(tuples_left <= 0)
             return false;
 
-        int read_tuples = min(tuples_left, tuples_in_buf);
-        int tuple_len = schema.get_serializing_length();
+        long read_tuples = min(tuples_left, tuples_in_buf);
+        long tuple_len = schema.get_serializing_length();
 
         char* buf_tupples = new char[read_tuples * tuple_len+1];
         fseek(fp, curr_pos, SEEK_SET);

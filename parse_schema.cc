@@ -12,7 +12,7 @@ type to_type(string s) {
         return t_integer;
     else if (s == "float")
         return t_float;
-    
+
     assert(false);
 }
 
@@ -27,21 +27,21 @@ Schema parse_schema(string schema_file, vector<string> sort_attrs_name) {
     if (!successful) {
         cout << "ERROR: " << json_reader.getFormattedErrorMessages() << endl;
         exit(1);
-    }  
+    }
 
     vector<Attribute> attrs;
     vector<int> sort_attrs;
 
     for(auto attribute: root) {
         Attribute a(
-            attribute["name"].asString(), 
-            (int) attribute["length"].asInt(), 
+            attribute["name"].asString(),
+            (int) attribute["length"].asInt(),
             to_type(attribute["type"].asString()));
         attrs.push_back(a);
     }
 
     for(auto sort_attribute: sort_attrs_name) {
-        int counter = 0;
+        long counter = 0;
         for(auto attribute: root) {
             if(attribute["name"].asString() == sort_attribute) {
                 sort_attrs.push_back(counter);
@@ -54,7 +54,7 @@ Schema parse_schema(string schema_file, vector<string> sort_attrs_name) {
     return schema;
 }
 
-// int main() {
+// long main() {
 //     vector<string> sort_attrs_name = {"account_name", "student_number"};
 
 //     Schema schema = parse_schema("schema_example.json", sort_attrs_name);

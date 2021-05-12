@@ -11,8 +11,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int Schema::get_serializing_length() {
-  int len = this->attrs.size();
+long Schema::get_serializing_length() {
+  long len = this->attrs.size();
   for (auto attr: this->attrs) {
     len += attr.length;
   }
@@ -25,7 +25,7 @@ void Record::print() {
   cout << endl;
 }
 
-int get_file_size(FILE *fp) {
+long get_file_size(FILE *fp) {
   // return # of bytes
   // source: https://www.codegrepper.com/code-examples/c/how+to+check+the+size+of+a+file+in+linux+c
 
@@ -37,8 +37,8 @@ int get_file_size(FILE *fp) {
 
 Record char2record(char* tuple, Schema &schema) {
   vector<string> data(schema.attrs.size());
-  int offset = 0;
-  int index = 0;
+  long offset = 0;
+  long index = 0;
   for(auto attr: schema.attrs) {
     string attr_value(tuple + offset, (long unsigned)attr.length);
     data[index] = attr_value;
@@ -49,10 +49,10 @@ Record char2record(char* tuple, Schema &schema) {
   return rec;
 }
 
-char* print_records(vector<Record> records, int tuple_len) {
+char* print_records(vector<Record> records, long tuple_len) {
   char* res = new char[records.size() * tuple_len + 1];
 
-  int index = 0;
+  long index = 0;
   for(Record rec: records) {
     for(auto value: rec.data) {
       strcpy(res + index, value.c_str());
@@ -65,8 +65,8 @@ char* print_records(vector<Record> records, int tuple_len) {
   res[index] = 0;
   return res;
 }
-void print_record_to_buf(Record* rec, char* buf, int position) {
-  int index = 0;
+void print_record_to_buf(Record* rec, char* buf, long position) {
+  long index = 0;
   for(auto value: rec->data) {
     strcpy(buf + position + index, value.c_str());
     index += value.size();
@@ -77,9 +77,9 @@ void print_record_to_buf(Record* rec, char* buf, int position) {
   buf[position + index] = 0;
 }
 
-vector<Record> get_records(char* buffer, int tuple_len, Schema &schema, int number_of_records) {
+vector<Record> get_records(char* buffer, long tuple_len, Schema &schema, long number_of_records) {
   vector<Record> records(number_of_records);
-  for(int i = 0; i < number_of_records; i++) {
+  for(long i = 0; i < number_of_records; i++) {
     records[i] = char2record(buffer + i * tuple_len, schema);
   }
   return records;
@@ -87,8 +87,8 @@ vector<Record> get_records(char* buffer, int tuple_len, Schema &schema, int numb
 
 // a comparator for records
 bool compareRecords(const Record& r1, const Record& r2) {
-  for(int sort_attr : r1.schema->sort_attrs){
-    int c = r1.data[sort_attr].compare(r2.data[sort_attr]);
+  for(long sort_attr : r1.schema->sort_attrs){
+    long c = r1.data[sort_attr].compare(r2.data[sort_attr]);
     if(c != 0){
       return c < 0;
     }
@@ -98,18 +98,18 @@ bool compareRecords(const Record& r1, const Record& r2) {
 
 void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema)
 {
-  int tuple_len = schema.get_serializing_length();
+  long tuple_len = schema.get_serializing_length();
   assert(run_length >= tuple_len);
-  int tuples_in_run = run_length / tuple_len;
-  int file_size = get_file_size(in_fp);
+  long tuples_in_run = run_length / tuple_len;
+  long file_size = get_file_size(in_fp);
 
   vector<Record> records(tuples_in_run, Record());
 
-  int tuples_left = file_size / tuple_len;
+  long tuples_left = file_size / tuple_len;
   char* tuple = new char[tuple_len + 1];
   while(tuples_left > 0) {
-    for(int i = 0; i < min(tuples_left, tuples_in_run); i++) {
-      int getline_arg = tuple_len + 1;
+    for(long i = 0; i < min(tuples_left, tuples_in_run); i++) {
+      long getline_arg = tuple_len + 1;
 
       getline(&tuple, (size_t*)(&getline_arg), in_fp);
       // cout << getline_arg << ' ' << strlen(tuple) << endl;
@@ -128,26 +128,26 @@ void mk_runs(FILE *in_fp, FILE *out_fp, long run_length, Schema &schema)
 void merge_runs(vector<RunIterator *> &iterators, FILE *out_fp,
   long start_pos, char *buf, long buf_size)
 {
-  int num_runs = iterators.size();
+  long num_runs = iterators.size();
 
-  int tuple_len = iterators[0]->get_schema().get_serializing_length();
+  long tuple_len = iterators[0]->get_schema().get_serializing_length();
   vector<Record*> next_records(num_runs);
 
-  int running_iterators = 0;
-  for(int i = 0; i < num_runs; i++){
+  long running_iterators = 0;
+  for(long i = 0; i < num_runs; i++){
     if(iterators[i]->has_next()){
       next_records[i] = iterators[i]->next();
       running_iterators++;
     }
   }
 
-  int buffer_position = 0;
-  int buffer_record_count = 0;
+  long buffer_position = 0;
+  long buffer_record_count = 0;
 
   while(running_iterators > 0){
     Record *next_rec = nullptr;
-    int iterator_index = -1;
-    for(int i = 0; i < num_runs; i++) {
+    long iterator_index = -1;
+    for(long i = 0; i < num_runs; i++) {
       //meaning there is no next in the current run
       if(next_records[i] == nullptr) {
         continue;
